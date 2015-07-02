@@ -321,7 +321,8 @@ generate_combined_read(const struct read *read_1,
 		       const struct read *read_2,
 		       struct read *combined_read,
 		       int overlap_begin,
-		       bool cap_mismatch_quals)
+		       bool cap_mismatch_quals,
+		       bool lowercase_overhang)
 {
 	/* Length of the overlapping part of two reads.  */
 	int overlap_len = read_1->seq_len - overlap_begin;
@@ -358,7 +359,10 @@ generate_combined_read(const struct read *read_1,
 
 	/* Copy the beginning of read 1 (not in the overlapped region).  */
 	while (overlap_begin--) {
-		*combined_seq++ = *seq_1++;
+		if (lowercase_overhang)
+			*combined_seq++ = (*seq_1++) + 32;
+		else
+			*combined_seq++ = *seq_1++;
 		*combined_qual++ = *qual_1++;
 	}
 
@@ -422,7 +426,10 @@ generate_combined_read(const struct read *read_1,
 
 	/* Copy the end of read 2 (not in the overlapped region).  */
 	while (remaining_len--) {
-		*combined_seq++ = *seq_2++;
+		if (lowercase_overhang)
+			*combined_seq++ = (*seq_2++) + 32;
+		else
+			*combined_seq++ = *seq_2++;
 		*combined_qual++ = *qual_2++;
 	}
 }
@@ -520,6 +527,7 @@ combine_reads(const struct read *read_1, const struct read *read_2,
 
 	/* Fill in the combined read.  */
 	generate_combined_read(read_1, read_2, combined_read,
-			       overlap_begin, params->cap_mismatch_quals);
+			       overlap_begin, params->cap_mismatch_quals,
+			       params->lowercase_overhang);
 	return status;
 }

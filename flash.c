@@ -44,7 +44,7 @@
 #include "read_queue.h"
 #include "util.h"
 
-#define VERSION_STR "v1.2.11"
+#define VERSION_STR "v1.2.11/lo"
 
 #ifdef __WIN32__
 #  define PAGER "more"
@@ -223,6 +223,10 @@ usage(const char *argv0)
 "                          the quality of a high quality, likely correct base\n"
 "                          call.\n"
 "\n"
+"  -l, --lowercase-overhang\n"
+"                          Print the non-overlapped portion of the merged reads\n"
+"                          in lowercase.\n"
+"\n"
 "  --interleaved-input     Instead of requiring files MATES_1.FASTQ and\n"
 "                          MATES_2.FASTQ, allow a single file MATES.FASTQ that\n"
 "                          has the paired-end reads interleaved.  Specify \"-\"\n"
@@ -352,7 +356,7 @@ enum {
 	TAB_DELIMITED_OUTPUT_OPTION,
 };
 
-static const char *optstring = "m:M:x:p:Or:f:s:IT:o:d:czt:qhv";
+static const char *optstring = "m:M:x:p:Or:f:s:lIT:o:d:czt:qhv";
 static const struct option longopts[] = {
 	{"min-overlap",          required_argument,  NULL, 'm'},
 	{"max-overlap",          required_argument,  NULL, 'M'},
@@ -363,6 +367,7 @@ static const struct option longopts[] = {
 	{"fragment-len",         required_argument,  NULL, 'f'},
 	{"fragment-len-stddev",  required_argument,  NULL, 's'},
 	{"cap-mismatch-quals",   no_argument,        NULL, CAP_MISMATCH_QUALS_OPTION},
+	{"lowercase-overhang",   no_argument,        NULL, 'l'},
 	{"interleaved",          no_argument,        NULL, 'I'},
 	{"interleaved-input",    no_argument,        NULL, INTERLEAVED_INPUT_OPTION},
 	{"interleaved-output",   no_argument,        NULL, INTERLEAVED_OUTPUT_OPTION},
@@ -832,6 +837,7 @@ main(int argc, char **argv)
 		.max_mismatch_density = 0.25,
 		.cap_mismatch_quals = false,
 		.allow_outies = false,
+		.lowercase_overhang = false,
 	};
 	bool max_overlap_specified = false;
 	struct read_format_params iparams = {
@@ -948,6 +954,9 @@ main(int argc, char **argv)
 			break;
 		case CAP_MISMATCH_QUALS_OPTION:
 			alg_params.cap_mismatch_quals = true;
+			break;
+		case 'l':
+			alg_params.lowercase_overhang = true;
 			break;
 		case 'I':
 			interleaved_input = true;
@@ -1218,6 +1227,8 @@ main(int argc, char **argv)
 		     alg_params.allow_outies ? "true" : "false");
 		info("    Cap mismatch quals:    %s",
 		     alg_params.cap_mismatch_quals ? "true" : "false");
+		info("    Lowercase overhang:    %s",
+		     alg_params.lowercase_overhang ? "true" : "false");
 		info("    Combiner threads:      %u",
 		     (unsigned)num_combiner_threads);
 

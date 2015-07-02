@@ -22,6 +22,9 @@ struct combine_params {
 
 	/* --allow-outies  */
 	bool allow_outies;
+
+	/* --lowercase-overhang  */
+	bool lowercase_overhang;
 };
 
 /* Result of a call to combine_reads()  */
