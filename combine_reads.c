@@ -257,7 +257,7 @@ pair_align(const struct read *read_1, const struct read *read_2,
 	float best_mismatch_density = max_mismatch_density + 1.0f;
 	float best_qual_score = 0.0f;
 	int best_position = NO_ALIGNMENT;
-	bool best_was_outie;
+	bool best_was_outie = false;
 	bool doing_outie = false;
 	int start;
 	int end;
@@ -321,8 +321,10 @@ generate_combined_read(const struct read *read_1,
 		       const struct read *read_2,
 		       struct read *combined_read,
 		       int overlap_begin,
+		       bool was_outie,
 		       bool cap_mismatch_quals,
-		       bool lowercase_overhang)
+		       bool lowercase_overhang,
+		       bool earliest)
 {
 	/* Length of the overlapping part of two reads.  */
 	int overlap_len = read_1->seq_len - overlap_begin;
@@ -405,15 +407,37 @@ generate_combined_read(const struct read *read_1,
 				*combined_seq = *seq_1;
 			} else if (*qual_1 < *qual_2) {
 				*combined_seq = *seq_2;
+			} else if (earliest) {
+				/* Same quality value; take the base that came
+				 * earliest in its respective read, unless that
+				 * is an 'N'. */
+				if (was_outie) {
+					if ((overlap_len < read_2->seq_len - remaining_len - overlap_len - 1 && *seq_1 != 'N') || *seq_2 == 'N')
+						*combined_seq = *seq_1;
+					else
+						*combined_seq = *seq_2;
+				} else {
+					if ((read_1->seq_len - overlap_len - 1 <= overlap_len + remaining_len && *seq_1 != 'N') || *seq_2 == 'N')
+						*combined_seq = *seq_1;
+					else
+						*combined_seq = *seq_2;
+				}
 			} else {
 				/* Same quality value; take the base from the
 				 * first read if the base from the second read
 				 * is an 'N'; otherwise take the base from the
 				 * second read. */
-				if (*seq_2 == 'N')
-					*combined_seq = *seq_1;
-				else
-					*combined_seq = *seq_2;
+				if (was_outie) {
+					if (*seq_2 == 'N')
+						*combined_seq = *seq_1;
+					else
+						*combined_seq = *seq_2;
+				} else {
+					if (*seq_1 == 'N')
+						*combined_seq = *seq_2;
+					else
+						*combined_seq = *seq_1;
+				}
 			}
 		}
 		combined_seq++;
@@ -526,8 +550,9 @@ combine_reads(const struct read *read_1, const struct read *read_2,
 	}
 
 	/* Fill in the combined read.  */
-	generate_combined_read(read_1, read_2, combined_read,
-			       overlap_begin, params->cap_mismatch_quals,
-			       params->lowercase_overhang);
+	generate_combined_read(read_1, read_2, combined_read, overlap_begin,
+			       was_outie, params->cap_mismatch_quals,
+			       params->lowercase_overhang,
+			       params->earliest);
 	return status;
 }

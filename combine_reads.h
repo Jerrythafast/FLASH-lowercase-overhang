@@ -25,6 +25,9 @@ struct combine_params {
 
 	/* --lowercase-overhang  */
 	bool lowercase_overhang;
+
+	/* --earliest  */
+	bool earliest;
 };
 
 /* Result of a call to combine_reads()  */
