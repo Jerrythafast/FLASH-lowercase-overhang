@@ -1,9 +1,10 @@
 Version 1.2.11.nfi.2
 -----------------
-- Introduced --earliest option, which controls the choice of output base for
-  mismatches with identical quality scores.  With this option specified, FLASH
-  will output the base that came earliest in its respective sequence.  The
-  default behaviour (without this option) has changed: in innie pairs, FLASH
+- Introduced --earliest and --ambiguous  options, which control the choice of
+  output base for mismatches with identical quality scores.  With --earliest,
+  FLASH will output the base that came earliest in its respective sequence.
+  With --ambiguous, FLASH will output an IUPAC ambiguous base code.  The
+  default behaviour (without either option) has changed: in innie pairs, FLASH
   will now favour the base in R1.  For outie pairs this was already the case.
 
 Version 1.2.11.nfi.1

@@ -324,7 +324,8 @@ generate_combined_read(const struct read *read_1,
 		       bool was_outie,
 		       bool cap_mismatch_quals,
 		       bool lowercase_overhang,
-		       bool earliest)
+		       bool earliest,
+		       bool ambiguous)
 {
 	/* Length of the overlapping part of two reads.  */
 	int overlap_len = read_1->seq_len - overlap_begin;
@@ -407,6 +408,11 @@ generate_combined_read(const struct read *read_1,
 				*combined_seq = *seq_1;
 			} else if (*qual_1 < *qual_2) {
 				*combined_seq = *seq_2;
+			} else if (ambiguous) {
+				/* Same quality value; output IUPAC ambiguous
+				 * base code, unless either read contains
+				 * an 'N' (all handled by iupac_code()). */
+				*combined_seq = iupac_code(*seq_1, *seq_2);
 			} else if (earliest) {
 				/* Same quality value; take the base that came
 				 * earliest in its respective read, unless that
@@ -553,6 +559,7 @@ combine_reads(const struct read *read_1, const struct read *read_2,
 	generate_combined_read(read_1, read_2, combined_read, overlap_begin,
 			       was_outie, params->cap_mismatch_quals,
 			       params->lowercase_overhang,
-			       params->earliest);
+			       params->earliest,
+			       params->ambiguous);
 	return status;
 }

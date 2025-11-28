@@ -35,6 +35,9 @@ struct input_stream;
 extern void
 reverse_complement(struct read *r);
 
+extern char
+iupac_code(char a, char b);
+
 extern void
 clean_read(struct read *r, int phred_offset, struct input_stream *in,
 	   uint64_t line_no);

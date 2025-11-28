@@ -118,6 +118,28 @@ reverse_complement(struct read *r)
 	reverse_with_mapping(r->qual, r->seq_len, identity_mapping);
 }
 
+/* A table mapping (base_a ^ base_b) to an IUPAC code.  */
+static const char ambiguous_tab[] = {
+	[0x00] = 'N', /* N ^ N */
+	[0x02] = 'M', /* A ^ C */
+	[0x04] = 'S', /* C ^ G */
+	[0x06] = 'R', /* A ^ G */
+	[0x09] = 'G', /* G ^ N */
+	[0x0D] = 'C', /* C ^ N */
+	[0x0F] = 'A', /* A ^ N */
+	[0x13] = 'K', /* G ^ T */
+	[0x15] = 'W', /* A ^ T */
+	[0x17] = 'Y', /* C ^ T */
+	[0x1A] = 'T', /* T ^ N */
+};
+
+/* Return IUPAC ambiguous base for a != b. */
+char
+iupac_code(char a, char b)
+{
+	return ambiguous_tab[(unsigned char)(a ^ b)];
+}
+
 /* Remove all whitespace from the end of the line/string.  Return the length of
  * the trimmed string. */
 static inline int

@@ -231,6 +231,9 @@ usage(const char *argv0)
 "                          prefer the base that comes earliest in its respective\n"
 "                          read, rather than defaulting to the base from R1.\n"
 "\n"
+"  -a, --ambiguous         When mismatching bases have equal quality scores,\n"
+"                          output the corresponding IUPAC ambiguous base code.\n"
+"\n"
 "  --interleaved-input     Instead of requiring files MATES_1.FASTQ and\n"
 "                          MATES_2.FASTQ, allow a single file MATES.FASTQ that\n"
 "                          has the paired-end reads interleaved.  Specify \"-\"\n"
@@ -360,7 +363,7 @@ enum {
 	TAB_DELIMITED_OUTPUT_OPTION,
 };
 
-static const char *optstring = "m:M:x:p:Or:f:s:leIT:o:d:czt:qhv";
+static const char *optstring = "m:M:x:p:Or:f:s:leaIT:o:d:czt:qhv";
 static const struct option longopts[] = {
 	{"min-overlap",          required_argument,  NULL, 'm'},
 	{"max-overlap",          required_argument,  NULL, 'M'},
@@ -373,6 +376,7 @@ static const struct option longopts[] = {
 	{"cap-mismatch-quals",   no_argument,        NULL, CAP_MISMATCH_QUALS_OPTION},
 	{"lowercase-overhang",   no_argument,        NULL, 'l'},
 	{"earliest",             no_argument,        NULL, 'e'},
+	{"ambiguous",            no_argument,        NULL, 'a'},
 	{"interleaved",          no_argument,        NULL, 'I'},
 	{"interleaved-input",    no_argument,        NULL, INTERLEAVED_INPUT_OPTION},
 	{"interleaved-output",   no_argument,        NULL, INTERLEAVED_OUTPUT_OPTION},
@@ -844,6 +848,7 @@ main(int argc, char **argv)
 		.allow_outies = false,
 		.lowercase_overhang = false,
 		.earliest = false,
+		.ambiguous = false,
 	};
 	bool max_overlap_specified = false;
 	struct read_format_params iparams = {
@@ -966,6 +971,9 @@ main(int argc, char **argv)
 			break;
 		case 'e':
 			alg_params.earliest = true;
+			break;
+		case 'a':
+			alg_params.ambiguous = true;
 			break;
 		case 'I':
 			interleaved_input = true;
@@ -1116,6 +1124,12 @@ main(int argc, char **argv)
 	#endif
 	}
 
+	if (alg_params.earliest && alg_params.ambiguous) {
+		fatal_error("You can only specify either --earliest or "
+			    "--ambiguous, not both");
+	}
+
+
 	if (alg_params.max_overlap < alg_params.min_overlap) {
 		fatal_error(
 "Maximum overlap (%d) cannot be less than the minimum overlap (%d).\n"
@@ -1240,6 +1254,8 @@ main(int argc, char **argv)
 		     alg_params.lowercase_overhang ? "true" : "false");
 		info("    Prefer earliest base:  %s",
 		     alg_params.earliest ? "true" : "false");
+		info("    Output ambiguous base: %s",
+		     alg_params.ambiguous ? "true" : "false");
 		info("    Combiner threads:      %u",
 		     (unsigned)num_combiner_threads);
 

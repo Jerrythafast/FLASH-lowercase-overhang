@@ -28,6 +28,9 @@ struct combine_params {
 
 	/* --earliest  */
 	bool earliest;
+
+	/* --ambiguous  */
+	bool ambiguous;
 };
 
 /* Result of a call to combine_reads()  */
