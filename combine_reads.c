@@ -325,7 +325,8 @@ generate_combined_read(const struct read *read_1,
 		       bool cap_mismatch_quals,
 		       bool lowercase_overhang,
 		       bool earliest,
-		       bool ambiguous)
+		       bool ambiguous,
+		       int qual_eq_threshold)
 {
 	/* Length of the overlapping part of two reads.  */
 	int overlap_len = read_1->seq_len - overlap_begin;
@@ -404,9 +405,9 @@ generate_combined_read(const struct read *read_1,
 			else
 				*combined_qual = max(abs(*qual_1 - *qual_2), 2);
 
-			if (*qual_1 > *qual_2) {
+			if (*qual_1 > *qual_2 + qual_eq_threshold) {
 				*combined_seq = *seq_1;
-			} else if (*qual_1 < *qual_2) {
+			} else if (*qual_1 < *qual_2 - qual_eq_threshold) {
 				*combined_seq = *seq_2;
 			} else if (ambiguous) {
 				/* Same quality value; output IUPAC ambiguous
@@ -560,6 +561,7 @@ combine_reads(const struct read *read_1, const struct read *read_2,
 			       was_outie, params->cap_mismatch_quals,
 			       params->lowercase_overhang,
 			       params->earliest,
-			       params->ambiguous);
+			       params->ambiguous,
+			       params->qual_eq_threshold);
 	return status;
 }

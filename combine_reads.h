@@ -31,6 +31,9 @@ struct combine_params {
 
 	/* --ambiguous  */
 	bool ambiguous;
+
+	/* --qual-eq-threshold  */
+	int qual_eq_threshold;
 };
 
 /* Result of a call to combine_reads()  */

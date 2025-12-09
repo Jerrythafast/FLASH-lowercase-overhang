@@ -234,6 +234,10 @@ usage(const char *argv0)
 "  -a, --ambiguous         When mismatching bases have equal quality scores,\n"
 "                          output the corresponding IUPAC ambiguous base code.\n"
 "\n"
+"  -E, --qual-eq-threshold=NUM\n"
+"                          Treat quality scores as equal if their absolute\n"
+"                          difference is less than or equal to NUM.  Default: 0.\n"
+"\n"
 "  --interleaved-input     Instead of requiring files MATES_1.FASTQ and\n"
 "                          MATES_2.FASTQ, allow a single file MATES.FASTQ that\n"
 "                          has the paired-end reads interleaved.  Specify \"-\"\n"
@@ -363,7 +367,7 @@ enum {
 	TAB_DELIMITED_OUTPUT_OPTION,
 };
 
-static const char *optstring = "m:M:x:p:Or:f:s:leaIT:o:d:czt:qhv";
+static const char *optstring = "m:M:x:p:Or:f:s:leaE:IT:o:d:czt:qhv";
 static const struct option longopts[] = {
 	{"min-overlap",          required_argument,  NULL, 'm'},
 	{"max-overlap",          required_argument,  NULL, 'M'},
@@ -377,6 +381,7 @@ static const struct option longopts[] = {
 	{"lowercase-overhang",   no_argument,        NULL, 'l'},
 	{"earliest",             no_argument,        NULL, 'e'},
 	{"ambiguous",            no_argument,        NULL, 'a'},
+	{"qual-eq-threshold",    required_argument,  NULL, 'E'},
 	{"interleaved",          no_argument,        NULL, 'I'},
 	{"interleaved-input",    no_argument,        NULL, INTERLEAVED_INPUT_OPTION},
 	{"interleaved-output",   no_argument,        NULL, INTERLEAVED_OUTPUT_OPTION},
@@ -849,6 +854,7 @@ main(int argc, char **argv)
 		.lowercase_overhang = false,
 		.earliest = false,
 		.ambiguous = false,
+		.qual_eq_threshold = 0,
 	};
 	bool max_overlap_specified = false;
 	struct read_format_params iparams = {
@@ -974,6 +980,13 @@ main(int argc, char **argv)
 			break;
 		case 'a':
 			alg_params.ambiguous = true;
+			break;
+		case 'E':
+			alg_params.qual_eq_threshold = strtol(optarg, &tmp, 10);
+			if (tmp == optarg || *tmp || alg_params.qual_eq_threshold < 0)
+				fatal_error("Equal quality threshold must be a "
+					    "nonnegative integer!  Please check "
+					    "option -E.");
 			break;
 		case 'I':
 			interleaved_input = true;
@@ -1129,7 +1142,6 @@ main(int argc, char **argv)
 			    "--ambiguous, not both");
 	}
 
-
 	if (alg_params.max_overlap < alg_params.min_overlap) {
 		fatal_error(
 "Maximum overlap (%d) cannot be less than the minimum overlap (%d).\n"
@@ -1256,6 +1268,8 @@ main(int argc, char **argv)
 		     alg_params.earliest ? "true" : "false");
 		info("    Output ambiguous base: %s",
 		     alg_params.ambiguous ? "true" : "false");
+		info("    Equal quality thresh.: %d",
+		     alg_params.qual_eq_threshold);
 		info("    Combiner threads:      %u",
 		     (unsigned)num_combiner_threads);
 
